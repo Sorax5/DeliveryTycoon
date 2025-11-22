@@ -22,9 +22,9 @@ public class VehicleMovement : MonoBehaviour
     public event Action<Vehicle> OnAdventureBackUpStarted;
     public event Action<Vehicle> OnAdventureBackUpEnded;
 
-    private Vector3Int currentPos;
-    private Vector3Int nextPos;
-    private List<Vector3Int> path;
+    public Vector3Int currentPos;
+    public Vector3Int nextPos;
+    public List<Vector3Int> path;
     private SpriteRenderer visual;
 
     private CancellationTokenSource pathCts;
@@ -130,7 +130,7 @@ public class VehicleMovement : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (this.path == null)
+        /*if (this.path == null)
         {
             return;
         }
@@ -158,6 +158,6 @@ public class VehicleMovement : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(nextWorldPos, 0.1f);
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(currentWorldPos, nextWorldPos);
+        Gizmos.DrawLine(currentWorldPos, nextWorldPos);*/
     }
 }

@@ -85,5 +85,28 @@ public class VehicleManager : MonoBehaviour
 
     }
 
+    private void OnDrawGizmos()
+    {
+        foreach (var movement in VehicleMovements)
+        {
+            if (movement == null || movement.path == null || movement.path.Count == 0)
+            {
+                continue;
+            }
 
+            Gizmos.color = Color.green;
+            for (var i = 0; i < movement.path.Count - 1; i++)
+            {
+                var start = worldManager.WorldTilemap.CellToWorld(movement.path[i]) + new Vector3(0, 0.5f, 0);
+                var end = worldManager.WorldTilemap.CellToWorld(movement.path[i + 1]) + new Vector3(0, 0.5f, 0);
+                Gizmos.DrawLine(start, end);
+            }
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(worldManager.CellToWorld(movement.currentPos) + new Vector3(0, 0.5f, 0), 0.1f);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(worldManager.CellToWorld(movement.nextPos) + new Vector3(0, 0.5f, 0), 0.1f);
+        }
+
+    }
 }
