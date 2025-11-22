@@ -39,7 +39,6 @@ public class VehicleMovement : MonoBehaviour
 
     public void StartAdventure(Vector3Int start, Vector3Int end)
     {
-        // Annule tout calcul précédent si nécessaire
         pathCts?.Cancel();
         pathCts = new CancellationTokenSource();
 
@@ -51,27 +50,23 @@ public class VehicleMovement : MonoBehaviour
 
     private IEnumerator ComputePathAndStartCoroutine(Vector3Int start, Vector3Int end, bool useDijkstra, CancellationToken cancellationToken)
     {
-        Task<List<Vector3Int>> task = useDijkstra
-            ? World.DijkstraAsync(start, end, cancellationToken)
-            : World.AStarAsync(start, end, cancellationToken);
+        List<Vector3Int> computedPath = null;
 
-        while (!task.IsCompleted)
-            yield return null;
+        if (useDijkstra)
+        {
+            yield return StartCoroutine(World.DijkstraCoroutine(start, end, result => computedPath = result, () => cancellationToken.IsCancellationRequested));
+        }
+        else
+        {
+            yield return StartCoroutine(World.AStarCoroutine(start, end, result => computedPath = result, () => cancellationToken.IsCancellationRequested));
+        }
 
-        if (task.IsCanceled)
+        if (cancellationToken.IsCancellationRequested)
         {
             Vehicle.IsAvailable = true;
             yield break;
         }
 
-        if (task.IsFaulted)
-        {
-            Debug.LogError(task.Exception);
-            Vehicle.IsAvailable = true;
-            yield break;
-        }
-
-        var computedPath = task.Result;
         if (computedPath == null || computedPath.Count == 0)
         {
             Vehicle.IsAvailable = true;
@@ -126,38 +121,5 @@ public class VehicleMovement : MonoBehaviour
         }
 
         yield break;
-    }
-
-    private void OnDrawGizmos()
-    {
-        /*if (this.path == null)
-        {
-            return;
-        }
-
-        for (var i = 0; i < path.Count; i++)
-        {
-            var fp = path[i];
-            var np = (i + 1 < path.Count) ? path[i + 1] : fp;
-            Vector3 fromWorldPos = WorldTilemap.CellToWorld(fp) + new Vector3(0, 0.5f, 0);
-            Vector3 toWorldPos = WorldTilemap.CellToWorld(np) + new Vector3(0, 0.5f, 0);
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawLine(fromWorldPos, toWorldPos);
-            Gizmos.color = Color.red;
-
-            Gizmos.DrawSphere(fromWorldPos, 0.05f);
-            Gizmos.color = Color.green;
-            Gizmos.DrawSphere(toWorldPos, 0.05f);
-        }
-
-        Vector3 currentWorldPos = WorldTilemap.CellToWorld(currentPos) + new Vector3(0, 0.5f, 0);
-        Vector3 nextWorldPos = WorldTilemap.CellToWorld(nextPos) + new Vector3(0, 0.5f, 0);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(currentWorldPos, 0.1f);
-        Gizmos.color = Color.green;
-        Gizmos.DrawSphere(nextWorldPos, 0.1f);
-        Gizmos.color = Color.blue;
-        Gizmos.DrawLine(currentWorldPos, nextWorldPos);*/
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -201,7 +202,7 @@ public class World
         return path;
     }
 
-    public Task<List<Vector3Int>> DijkstraAsync(Vector3Int start, Vector3Int end, CancellationToken cancellationToken = default)
+    public IEnumerator DijkstraCoroutine(Vector3Int start, Vector3Int end, Action<List<Vector3Int>> onComplete, Func<bool> isCanceled = null, int yieldEvery = 100)
     {
         var nodes = new List<Vector3Int>(floorMap.Keys);
         var weights = new Dictionary<Vector3Int, float>(nodes.Count);
@@ -210,94 +211,85 @@ public class World
             weights[kv.Key] = kv.Value.Poids;
         }
 
-        return Task.Run(() =>
+        var path = new List<Vector3Int>();
+        var distances = new Dictionary<Vector3Int, float>(nodes.Count);
+        var previous = new Dictionary<Vector3Int, Vector3Int?>(nodes.Count);
+
+        foreach (var position in nodes)
         {
-            var path = new List<Vector3Int>();
-            var distances = new Dictionary<Vector3Int, float>(nodes.Count);
-            var previous = new Dictionary<Vector3Int, Vector3Int?>(nodes.Count);
+            distances[position] = float.MaxValue;
+            previous[position] = null;
+        }
 
-            foreach (var position in nodes)
+        if (!distances.ContainsKey(start) || !distances.ContainsKey(end))
+        {
+            onComplete?.Invoke(path);
+            yield break;
+        }
+
+        distances[start] = 0;
+        var unvisited = new HashSet<Vector3Int>(nodes);
+        int iter = 0;
+
+        while (unvisited.Count > 0)
+        {
+            if (isCanceled != null && isCanceled())
             {
-                distances[position] = float.MaxValue;
-                previous[position] = null;
+                onComplete?.Invoke(new List<Vector3Int>()); yield break;
             }
 
-            if (!distances.ContainsKey(start) || !distances.ContainsKey(end))
+            Vector3Int current = GetClosestNode(unvisited, distances);
+            unvisited.Remove(current);
+
+            if (current.Equals(end))
             {
-                return path;
+                break;
             }
-            
-            distances[start] = 0;
-            var unvisited = new HashSet<Vector3Int>(nodes);
 
-            while (unvisited.Count > 0)
+            var neighbors = GetNeighbors(current);
+
+            foreach (var neighbor in neighbors)
             {
-                if (cancellationToken.IsCancellationRequested)
+                if (!weights.ContainsKey(neighbor))
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    continue;
                 }
 
-                Vector3Int current = default;
-                var best = float.MaxValue;
-                foreach (var n in unvisited)
+                var cost = distances[current] + weights[neighbor];
+                if (cost < distances[neighbor])
                 {
-                    if (distances[n] >= best)
-                    {
-                        continue;
-                    }
-
-                    best = distances[n];
-                    current = n;
-                }
-                unvisited.Remove(current);
-
-                if (current.Equals(end))
-                {
-                    break;
-                }
-
-                var neighbors = GetNeighbors(current);
-
-                foreach (var neighbor in neighbors)
-                {
-                    if (!weights.ContainsKey(neighbor))
-                    {
-                        continue;
-                    }
-
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-
-                    var cost = distances[current] + weights[neighbor];
-                    if (cost >= distances[neighbor])
-                    {
-                        continue;
-                    }
-
                     distances[neighbor] = cost;
                     previous[neighbor] = current;
                 }
             }
 
-            Vector3Int? step = end;
-            if (!distances.ContainsKey(end) || distances[end] >= float.MaxValue)
-            {
-                return path;
-            }
+            iter++;
+            if (iter % yieldEvery == 0)
+                yield return null;
+        }
 
-            while (step.HasValue)
-            {
-                path.Insert(0, step.Value);
-                step = previous[step.Value];
-            }
+        if (!distances.ContainsKey(end) || distances[end] >= float.MaxValue)
+        {
+            onComplete?.Invoke(path);
+            yield break;
+        }
 
-            return path;
-        }, cancellationToken);
+        Vector3Int? step = end;
+        while (step.HasValue)
+        {
+            path.Insert(0, step.Value);
+            step = previous[step.Value];
+
+            if (path.Count % yieldEvery == 0)
+            {
+                yield return null;
+            }
+        }
+
+        onComplete?.Invoke(path);
     }
 
-    public Task<List<Vector3Int>> AStarAsync(Vector3Int start, Vector3Int end, CancellationToken cancellationToken = default)
+    public IEnumerator AStarCoroutine(Vector3Int start, Vector3Int end, Action<List<Vector3Int>> onComplete, Func<bool> isCanceled = null, int yieldEvery = 100)
     {
         var nodes = new List<Vector3Int>(floorMap.Keys);
         var weights = new Dictionary<Vector3Int, float>(nodes.Count);
@@ -306,91 +298,78 @@ public class World
             weights[kv.Key] = kv.Value.Poids;
         }
 
-        return Task.Run(() =>
+        var path = new List<Vector3Int>();
+        var distances = new Dictionary<Vector3Int, float>(nodes.Count);
+        var previous = new Dictionary<Vector3Int, Vector3Int?>(nodes.Count);
+        var fScore = new Dictionary<Vector3Int, float>(nodes.Count);
+
+        foreach (var position in nodes)
         {
-            var path = new List<Vector3Int>();
-            var distances = new Dictionary<Vector3Int, float>(nodes.Count);
-            var previous = new Dictionary<Vector3Int, Vector3Int?>(nodes.Count);
-            var fScore = new Dictionary<Vector3Int, float>(nodes.Count);
+            distances[position] = float.MaxValue;
+            previous[position] = null;
+            fScore[position] = float.MaxValue;
+        }
 
-            foreach (var position in nodes)
+        if (!distances.ContainsKey(start) || !distances.ContainsKey(end))
+        {
+            onComplete?.Invoke(path);
+            yield break;
+        }
+
+        distances[start] = 0;
+        fScore[start] = Heuristic(start, end);
+
+        var openSet = new HashSet<Vector3Int> { start };
+        var iter = 0;
+
+        while (openSet.Count > 0)
+        {
+            if (isCanceled != null && isCanceled())
             {
-                distances[position] = float.MaxValue;
-                previous[position] = null;
-                fScore[position] = float.MaxValue;
+                onComplete?.Invoke(new List<Vector3Int>()); yield break;
             }
 
-            if (!distances.ContainsKey(start) || !distances.ContainsKey(end))
+            Vector3Int current = GetClosestNode(openSet, fScore);
+            if (current.Equals(end))
             {
-                return path;
-            }
-            
-            distances[start] = 0;
-            fScore[start] = Heuristic(start, end);
-
-            var openSet = new HashSet<Vector3Int> { start };
-            while (openSet.Count > 0)
-            {
-                if (cancellationToken.IsCancellationRequested)
+                Vector3Int? step = end;
+                while (step.HasValue)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    path.Insert(0, step.Value);
+                    step = previous[step.Value];
                 }
-
-                Vector3Int current = default;
-                var best = float.MaxValue;
-                foreach (var n in openSet)
-                {
-                    if (fScore[n] >= best)
-                    { 
-                        continue;
-                    }
-
-                    best = fScore[n];
-                    current = n;
-                }
-
-                if (current.Equals(end))
-                {
-                    Vector3Int? step = end;
-                    while (step.HasValue)
-                    {
-                        path.Insert(0, step.Value);
-                        step = previous[step.Value];
-                    }
-                    return path;
-                }
-
-                openSet.Remove(current);
-
-                foreach (var neighbor in GetNeighbors(current))
-                {
-                    if (!weights.ContainsKey(neighbor))
-                    {
-                        continue;
-                    }
-
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-
-                    var tentativeGScore = distances[current] + weights[neighbor];
-
-
-                    if (tentativeGScore >= distances[neighbor])
-                    {
-                        continue;
-                    }
-
-                    previous[neighbor] = current;
-                    distances[neighbor] = tentativeGScore;
-                    fScore[neighbor] = tentativeGScore + Heuristic(neighbor, end);
-                    openSet.Add(neighbor);
-                }
+                onComplete?.Invoke(path);
+                yield break;
             }
 
-            return path;
-        }, cancellationToken);
+            openSet.Remove(current);
+
+            foreach (var neighbor in GetNeighbors(current))
+            {
+                if (!weights.ContainsKey(neighbor))
+                {
+                    continue;
+                }
+
+                var tentativeGScore = distances[current] + weights[neighbor];
+
+                if (tentativeGScore >= distances[neighbor])
+                {
+                    continue;
+                }
+
+                previous[neighbor] = current;
+                distances[neighbor] = tentativeGScore;
+                fScore[neighbor] = tentativeGScore + Heuristic(neighbor, end);
+                openSet.Add(neighbor);
+            }
+
+            iter++;
+            if (iter % yieldEvery == 0)
+                yield return null;
+        }
+
+        onComplete?.Invoke(path);
     }
 
     private float Heuristic(Vector3Int a, Vector3Int b)
