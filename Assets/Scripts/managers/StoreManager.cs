@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,5 +19,15 @@ public class StoreManager : MonoBehaviour
         storeGameObject.transform.position = worldManager.CellToWorld(newStore.Position) + new Vector3(0,0.5f,0);
 
         return newStore;
+    }
+
+    public Store GetRandomStore()
+    {
+        if (Stores.Count == 0)
+        {
+            throw new InvalidOperationException("No stores available.");
+        }
+        var randomIndex = UnityEngine.Random.Range(0, Stores.Count);
+        return Stores[randomIndex];
     }
 }

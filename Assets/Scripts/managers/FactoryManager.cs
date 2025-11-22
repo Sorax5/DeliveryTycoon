@@ -53,4 +53,13 @@ public class FactoryManager : MonoBehaviour
         vehicleManager.StartDelivery(Factory, store4);
         vehicleManager.StartDelivery(Factory, store5);
     }
+
+    private void Update()
+    {
+        if (vehicleManager.HasAvailableVehicle())
+        {
+            var randomStore = storeManager.GetRandomStore();
+            vehicleManager.StartDelivery(Factory, randomStore);
+        }
+    }
 }

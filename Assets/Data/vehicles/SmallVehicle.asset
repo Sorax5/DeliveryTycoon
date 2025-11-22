@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: SmallVehicle
   m_EditorClassIdentifier: Assembly-CSharp::VehicleDefinition
   Name: Petite voiture
-  algorithm: 1
+  algorithm: 0
   vehiclePrefab: {fileID: 3896261925706242043, guid: 2826aae14b7f657478a11f7395bc336d, type: 3}
   speed: 1
