@@ -34,24 +34,17 @@ public class FactoryManager : MonoBehaviour
         GameObject factoryGameObject = GameObject.Instantiate(factoryDefinition.FactoryPrefab);
         factoryGameObject.transform.position = worldManager.CellToWorld(factoryPosition) + new Vector3(0, 0.5f, 0);
 
-        vehicleManager.CreateVehicle(0);
-        vehicleManager.CreateVehicle(0);
-        vehicleManager.CreateVehicle(0);
-        vehicleManager.CreateVehicle(0);
-        vehicleManager.CreateVehicle(0);
-        vehicleManager.CreateVehicle(0);
+        int amountOfVehicles = 20;
+        for (int i = 0; i < amountOfVehicles; i++)
+        {
+            vehicleManager.CreateVehicle(0);
+        }
 
-        var store = storeManager.CreateStore(worldManager.World.GetRandomPositionAt(Factory.Position, 50), 0);
-        var store2 = storeManager.CreateStore(worldManager.World.GetRandomPositionAt(Factory.Position, 50), 0);
-        var store3 = storeManager.CreateStore(worldManager.World.GetRandomPositionAt(Factory.Position, 50), 0);
-        var store4 = storeManager.CreateStore(worldManager.World.GetRandomPositionAt(Factory.Position, 50), 0);
-        var store5 = storeManager.CreateStore(worldManager.World.GetRandomPositionAt(Factory.Position, 50), 0);
-
-        vehicleManager.StartDelivery(Factory, store);
-        vehicleManager.StartDelivery(Factory, store2);
-        vehicleManager.StartDelivery(Factory, store3);
-        vehicleManager.StartDelivery(Factory, store4);
-        vehicleManager.StartDelivery(Factory, store5);
+        int amountOfStores = 8;
+        for (int i = 0; i < amountOfStores; i++)
+        {
+            storeManager.CreateStore(worldManager.World.GetRandomPositionAt(Factory.Position, 50), 0);
+        }
     }
 
     private void Update()

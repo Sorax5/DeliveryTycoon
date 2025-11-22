@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class World
@@ -199,12 +201,204 @@ public class World
         return path;
     }
 
-    public float Heuristic(Vector3Int a, Vector3Int b)
+    public Task<List<Vector3Int>> DijkstraAsync(Vector3Int start, Vector3Int end, CancellationToken cancellationToken = default)
+    {
+        var nodes = new List<Vector3Int>(floorMap.Keys);
+        var weights = new Dictionary<Vector3Int, float>(nodes.Count);
+        foreach (var kv in floorMap)
+        {
+            weights[kv.Key] = kv.Value.Poids;
+        }
+
+        return Task.Run(() =>
+        {
+            var path = new List<Vector3Int>();
+            var distances = new Dictionary<Vector3Int, float>(nodes.Count);
+            var previous = new Dictionary<Vector3Int, Vector3Int?>(nodes.Count);
+
+            foreach (var position in nodes)
+            {
+                distances[position] = float.MaxValue;
+                previous[position] = null;
+            }
+
+            if (!distances.ContainsKey(start) || !distances.ContainsKey(end))
+            {
+                return path;
+            }
+            
+            distances[start] = 0;
+            var unvisited = new HashSet<Vector3Int>(nodes);
+
+            while (unvisited.Count > 0)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                Vector3Int current = default;
+                var best = float.MaxValue;
+                foreach (var n in unvisited)
+                {
+                    if (distances[n] >= best)
+                    {
+                        continue;
+                    }
+
+                    best = distances[n];
+                    current = n;
+                }
+                unvisited.Remove(current);
+
+                if (current.Equals(end))
+                {
+                    break;
+                }
+
+                var neighbors = GetNeighbors(current);
+
+                foreach (var neighbor in neighbors)
+                {
+                    if (!weights.ContainsKey(neighbor))
+                    {
+                        continue;
+                    }
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    var cost = distances[current] + weights[neighbor];
+                    if (cost >= distances[neighbor])
+                    {
+                        continue;
+                    }
+
+                    distances[neighbor] = cost;
+                    previous[neighbor] = current;
+                }
+            }
+
+            Vector3Int? step = end;
+            if (!distances.ContainsKey(end) || distances[end] >= float.MaxValue)
+            {
+                return path;
+            }
+
+            while (step.HasValue)
+            {
+                path.Insert(0, step.Value);
+                step = previous[step.Value];
+            }
+
+            return path;
+        }, cancellationToken);
+    }
+
+    public Task<List<Vector3Int>> AStarAsync(Vector3Int start, Vector3Int end, CancellationToken cancellationToken = default)
+    {
+        var nodes = new List<Vector3Int>(floorMap.Keys);
+        var weights = new Dictionary<Vector3Int, float>(nodes.Count);
+        foreach (var kv in floorMap)
+        {
+            weights[kv.Key] = kv.Value.Poids;
+        }
+
+        return Task.Run(() =>
+        {
+            var path = new List<Vector3Int>();
+            var distances = new Dictionary<Vector3Int, float>(nodes.Count);
+            var previous = new Dictionary<Vector3Int, Vector3Int?>(nodes.Count);
+            var fScore = new Dictionary<Vector3Int, float>(nodes.Count);
+
+            foreach (var position in nodes)
+            {
+                distances[position] = float.MaxValue;
+                previous[position] = null;
+                fScore[position] = float.MaxValue;
+            }
+
+            if (!distances.ContainsKey(start) || !distances.ContainsKey(end))
+            {
+                return path;
+            }
+            
+            distances[start] = 0;
+            fScore[start] = Heuristic(start, end);
+
+            var openSet = new HashSet<Vector3Int> { start };
+            while (openSet.Count > 0)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                Vector3Int current = default;
+                var best = float.MaxValue;
+                foreach (var n in openSet)
+                {
+                    if (fScore[n] >= best)
+                    { 
+                        continue;
+                    }
+
+                    best = fScore[n];
+                    current = n;
+                }
+
+                if (current.Equals(end))
+                {
+                    Vector3Int? step = end;
+                    while (step.HasValue)
+                    {
+                        path.Insert(0, step.Value);
+                        step = previous[step.Value];
+                    }
+                    return path;
+                }
+
+                openSet.Remove(current);
+
+                foreach (var neighbor in GetNeighbors(current))
+                {
+                    if (!weights.ContainsKey(neighbor))
+                    {
+                        continue;
+                    }
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    var tentativeGScore = distances[current] + weights[neighbor];
+
+
+                    if (tentativeGScore >= distances[neighbor])
+                    {
+                        continue;
+                    }
+
+                    previous[neighbor] = current;
+                    distances[neighbor] = tentativeGScore;
+                    fScore[neighbor] = tentativeGScore + Heuristic(neighbor, end);
+                    openSet.Add(neighbor);
+                }
+            }
+
+            return path;
+        }, cancellationToken);
+    }
+
+    private float Heuristic(Vector3Int a, Vector3Int b)
     {
         return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
     }
 
-    public Vector3Int GetClosestNode(HashSet<Vector3Int> unvisited, Dictionary<Vector3Int, float> distances)
+    private Vector3Int GetClosestNode(HashSet<Vector3Int> unvisited, Dictionary<Vector3Int, float> distances)
     {
         Vector3Int closestNode = default;
         float closestDistance = float.MaxValue;
@@ -219,7 +413,7 @@ public class World
         return closestNode;
     }
 
-    public List<Vector3Int> GetNeighbors(Vector3Int node)
+    private List<Vector3Int> GetNeighbors(Vector3Int node)
     {
         List<Vector3Int> neighbors = new List<Vector3Int>();
         Vector3Int[] directions = new Vector3Int[]

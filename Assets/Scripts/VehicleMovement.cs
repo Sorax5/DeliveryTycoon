@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -25,6 +27,8 @@ public class VehicleMovement : MonoBehaviour
     private List<Vector3Int> path;
     private SpriteRenderer visual;
 
+    private CancellationTokenSource pathCts;
+
     [SerializeField] private Vehicle vehicle;
 
     private void Awake()
@@ -35,20 +39,47 @@ public class VehicleMovement : MonoBehaviour
 
     public void StartAdventure(Vector3Int start, Vector3Int end)
     {
+        // Annule tout calcul précédent si nécessaire
+        pathCts?.Cancel();
+        pathCts = new CancellationTokenSource();
+
         Vehicle.IsAvailable = false;
-        List<Vector3Int> path = new List<Vector3Int>();
-        switch (Vehicle.Algorithme)
+
+        bool useDijkstra = Vehicle.Algorithme == AlgorithmeEnum.DIJKSTRA;
+        StartCoroutine(ComputePathAndStartCoroutine(start, end, useDijkstra, pathCts.Token));
+    }
+
+    private IEnumerator ComputePathAndStartCoroutine(Vector3Int start, Vector3Int end, bool useDijkstra, CancellationToken cancellationToken)
+    {
+        Task<List<Vector3Int>> task = useDijkstra
+            ? World.DijkstraAsync(start, end, cancellationToken)
+            : World.AStarAsync(start, end, cancellationToken);
+
+        while (!task.IsCompleted)
+            yield return null;
+
+        if (task.IsCanceled)
         {
-            case AlgorithmeEnum.DIJKSTRA:
-                path = World.Dijkstra(start, end);
-                break;
-            case AlgorithmeEnum.ASTAR:
-                path = World.AStar(start, end);
-                break;
+            Vehicle.IsAvailable = true;
+            yield break;
+        }
+
+        if (task.IsFaulted)
+        {
+            Debug.LogError(task.Exception);
+            Vehicle.IsAvailable = true;
+            yield break;
+        }
+
+        var computedPath = task.Result;
+        if (computedPath == null || computedPath.Count == 0)
+        {
+            Vehicle.IsAvailable = true;
+            yield break;
         }
 
         transform.position = WorldTilemap.CellToWorld(start) + new Vector3(0, 0.5f, 0);
-        this.path = path;
+        this.path = computedPath;
         StartCoroutine(MoveAdventure());
     }
 
