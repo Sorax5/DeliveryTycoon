@@ -54,19 +54,18 @@ jobs:
         uses: game-ci/unity-builder@v4
         with:
           targetPlatform: WebGL
-          buildName: WebGL # Simplifié pour éviter les confusions de dossiers
+          buildName: WebGL
+          compression: Gzip 
 
       # 4.5 DEBUG : Lister les fichiers pour vérifier si le build a fonctionné
       - name: Debug - Voir les fichiers générés
         run: ls -R build || echo "Le dossier build n'existe pas !"
 
-      # --- CORRECTION FINALE : Utilisation de l'action dédiée au déploiement Pages ---
+      # --- L'action d'upload dédiée va bien fonctionner maintenant ---
       - name: Upload du Build vers Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          # Le nom DOIT être 'github-pages'
           name: github-pages
-          # Le chemin d'accès qui contient l'index.html
           path: build/WebGL/WebGL
           
   deploy:
