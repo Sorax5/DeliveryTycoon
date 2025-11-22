@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8069421d0a257db4dabab8a227622896, type: 3}
+  m_Name: SmallVehicle
+  m_EditorClassIdentifier: Assembly-CSharp::VehicleDefinition
+  Name: Petite voiture
+  algorithm: 1
+  vehiclePrefab: {fileID: 3896261925706242043, guid: 2826aae14b7f657478a11f7395bc336d, type: 3}
+  speed: 1

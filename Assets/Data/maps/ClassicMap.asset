@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 054ea580e337c3648a83bfb019ff55d2, type: 3}
+  m_Name: ClassicMap
+  m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
+  Width: 60
+  Height: 60
+  NoiseDefinition: {fileID: 11400000, guid: 094c86370c4264941819daf9ac8f7ca0, type: 2}
+  FloorRanges:
+  - FloorDefinition: {fileID: 11400000, guid: 3d2578cd6cb0dc04f8bd565ec9f72a1c, type: 2}
+    NoiseRange: {x: -1.1, y: -0.8}
+  - FloorDefinition: {fileID: 11400000, guid: bc91afd39d1b82640acff689d550ae98, type: 2}
+    NoiseRange: {x: -0.8, y: -0.6}
+  - FloorDefinition: {fileID: 11400000, guid: 5995c27832447204c95bd4e0f7ef6010, type: 2}
+    NoiseRange: {x: -0.6, y: 1}
