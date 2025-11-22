@@ -1,6 +1,5 @@
 name: Build Unity WebGL & Deploy
 
-# Déclenche l'action sur un push vers la branche main ou manuellement
 on:
   push:
     branches:
@@ -22,13 +21,11 @@ jobs:
     name: Build WebGL
     runs-on: ubuntu-latest
     steps:
-      # 1. Récupération du code
       - name: Checkout du code
         uses: actions/checkout@v4
         with:
-          lfs: true # Important pour les assets Unity volumineux
+          lfs: true
 
-      # 2. Mise en cache pour accélérer les builds futurs (Library folder)
       - name: Mise en cache de la librairie Unity
         uses: actions/cache@v3
         with:
@@ -37,7 +34,6 @@ jobs:
           restore-keys: |
             Library-
 
-      # 3. Nettoyage de l'espace disque (Optionnel mais recommandé pour les gros projets)
       - name: Libération d'espace disque
         uses: jlumbroso/free-disk-space@main
         with:
@@ -49,36 +45,30 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      # 4. Compilation du projet Unity
       - name: Build Unity WebGL
         uses: game-ci/unity-builder@v4
         with:
           targetPlatform: WebGL
-          buildName: WebGL # Simplifié pour éviter les confusions de dossiers
+          buildName: WebGL
 
-      # 4.5 DEBUG : Lister les fichiers pour vérifier si le build a fonctionné
       - name: Debug - Voir les fichiers générés
         run: ls -R build || echo "Le dossier build n'existe pas !"
 
-      # 5. Sauvegarde du résultat (artifact) pour le job de déploiement natif
       - name: Upload du Build (pour GitHub Pages)
         uses: actions/upload-artifact@v4
         with:
-          # ATTENTION : Le nom DOIT être 'github-pages' pour le déploiement natif
           name: github-pages
-          path: build/WebGL # On cible le sous-dossier WebGL contenant le build
-          if-no-files-found: error # Fait échouer le job explicitement si vide
+          path: build/WebGL/WebGL 
+          if-no-files-found: error
 
   deploy:
     name: Deploy to GitHub Pages
-    # Configuration de l'environnement GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
-      # 1. Déploie l'artifact 'github-pages' vers GitHub Pages
       - name: Déploiement natif sur GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
