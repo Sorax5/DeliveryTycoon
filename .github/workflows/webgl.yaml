@@ -1,0 +1,84 @@
+name: Build Unity WebGL & Deploy
+
+# Déclenche l'action sur un push vers la branche main ou manuellement
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write # Nécessaire pour pousser sur la branche gh-pages
+
+env:
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+jobs:
+  build:
+    name: Build WebGL
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Récupération du code
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          lfs: true # Important pour les assets Unity volumineux
+
+      # 2. Mise en cache pour accélérer les builds futurs (Library folder)
+      - name: Mise en cache de la librairie Unity
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      # 3. Nettoyage de l'espace disque (Optionnel mais recommandé pour les gros projets)
+      - name: Libération d'espace disque
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      # 4. Compilation du projet Unity
+      - name: Build Unity WebGL
+        uses: game-ci/unity-builder@v4
+        with:
+          targetPlatform: WebGL
+          buildName: WebGLBuild # Nom du dossier de sortie
+
+      # 5. Sauvegarde du résultat (artifact) pour le job suivant
+      - name: Upload du Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-webgl
+          path: build/WebGLBuild
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build # Ce job attend que le build soit fini
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # 1. Téléchargement de l'artifact créé par le job précédent
+      - name: Téléchargement du Build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-webgl
+          path: build
+
+      # 2. Déploiement sur la branche gh-pages
+      - name: Déploiement sur GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build/WebGL # Le dossier à publier
+          branch: gh-pages # La branche cible
