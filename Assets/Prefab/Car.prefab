@@ -48,6 +48,11 @@ MonoBehaviour:
   currentPos: {x: 0, y: 0, z: 0}
   nextPos: {x: 0, y: 0, z: 0}
   path: []
+  pathLineRenderer: {fileID: 0}
+  showReturnPath: 1
+  pathYOffset: 0.5
+  pathLineWidth: 0.08
+  pathColor: {r: 1, g: 0.85, b: 0.2, a: 0.8}
 --- !u!1 &9117656433280128623
 GameObject:
   m_ObjectHideFlags: 0
@@ -105,7 +110,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 88f657043ba05cf4ca457414bfc3c254, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

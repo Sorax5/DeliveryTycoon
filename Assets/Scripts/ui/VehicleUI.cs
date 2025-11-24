@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class VehicleUI : MonoBehaviour
 {
     private Vehicle vehicle;
+    private bool hasBeenInitialised = false;
 
     public Vehicle Vehicle
     {
@@ -24,19 +25,17 @@ public class VehicleUI : MonoBehaviour
     [SerializeField] private TMP_Dropdown algorithmDropdown;
     [SerializeField] private Toggle availabilityToggle;
 
-    private void Start()
-    {
-        algorithmDropdown.ClearOptions();
-        algorithmDropdown.AddOptions(Enum.GetNames(typeof(AlgorithmeEnum)).ToList());  
-
-        algorithmDropdown.onValueChanged.AddListener((int value) =>
-        {
-            vehicle.Algorithme = (AlgorithmeEnum)value;
-        });
-    }
-
     private void updateUI() 
     {
+        if (!hasBeenInitialised)
+        {
+            algorithmDropdown.ClearOptions();
+            algorithmDropdown.AddOptions(Enum.GetNames(typeof(AlgorithmeEnum)).ToList());
+            algorithmDropdown.onValueChanged.AddListener(OnValueChange);
+            hasBeenInitialised = true;
+        }
+        
+
         labelName.text = vehicle.Definition.Name;
         uniqueId.text = vehicle.UniqueId.ToString();
         speed.text = speedFormat(vehicle.Speed);
@@ -57,5 +56,10 @@ public class VehicleUI : MonoBehaviour
     private string speedFormat(float speed)
     {
         return $"{speed} km/h";
+    }
+
+    private void OnValueChange(int value)
+    {
+        vehicle.Algorithme = (AlgorithmeEnum)value;
     }
 }

@@ -2,6 +2,6 @@ using UnityEngine;
 
 public enum AlgorithmeEnum
 {
-    ASTAR,
-    DIJKSTRA,
+    ASTAR = 0,
+    DIJKSTRA = 1,
 }
