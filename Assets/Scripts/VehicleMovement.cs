@@ -31,10 +31,9 @@ public class VehicleMovement : MonoBehaviour
 
     [SerializeField] private Vehicle vehicle;
 
-    // Remplacement des multiples prefabs par un seul LineRenderer pour réduire le lag
-    [SerializeField] private LineRenderer pathLineRenderer; // Assigner ou laisser null pour création auto
+    [SerializeField] private LineRenderer pathLineRenderer;
     [SerializeField] private bool showReturnPath = false;
-    [SerializeField] private float pathYOffset = 0.5f; // Décalage vertical
+    [SerializeField] private float pathYOffset = 0.5f;
     [SerializeField] private float pathLineWidth = 0.08f;
     [SerializeField] private Color pathColor = new Color(1f, 0.85f, 0.2f, 0.8f);
 
@@ -55,7 +54,7 @@ public class VehicleMovement : MonoBehaviour
         pathLineRenderer.positionCount = 0;
         pathLineRenderer.startColor = pathColor;
         pathLineRenderer.endColor = pathColor;
-        pathLineRenderer.sortingOrder = 10; // Devant le sol
+        pathLineRenderer.sortingOrder = 2;
     }
 
     public void StartAdventure(Vector3Int start, Vector3Int end)
