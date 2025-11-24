@@ -22,6 +22,7 @@ public class VehicleUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI labelName;
     [SerializeField] private TextMeshProUGUI uniqueId;
     [SerializeField] private TextMeshProUGUI speed;
+    [SerializeField] private Image icon;
     [SerializeField] private TMP_Dropdown algorithmDropdown;
     [SerializeField] private Toggle availabilityToggle;
 
@@ -41,6 +42,7 @@ public class VehicleUI : MonoBehaviour
         speed.text = speedFormat(vehicle.Speed);
         algorithmDropdown.value = (int)vehicle.Algorithme;
         availabilityToggle.isOn = vehicle.IsAvailable;
+        icon.sprite = Sprite.Create(vehicle.Definition.Sprite, new Rect(0, 0, vehicle.Definition.Sprite.width, vehicle.Definition.Sprite.height), new Vector2(0.5f, 0.5f));
 
         vehicle.OnAvailabilityChanged += () =>
         {

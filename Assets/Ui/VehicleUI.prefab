@@ -1095,6 +1095,7 @@ MonoBehaviour:
   labelName: {fileID: 8016630926395767365}
   uniqueId: {fileID: 5203066670362021967}
   speed: {fileID: 2297302704102799687}
+  icon: {fileID: 7834319951365226193}
   algorithmDropdown: {fileID: 6663218012980441972}
   availabilityToggle: {fileID: 2991901644160447009}
 --- !u!1 &3193690533525571298

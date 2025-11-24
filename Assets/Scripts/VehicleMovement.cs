@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -27,8 +25,6 @@ public class VehicleMovement : MonoBehaviour
     public List<Vector3Int> path;
     private SpriteRenderer visual;
 
-    private CancellationTokenSource pathCts;
-
     [SerializeField] private Vehicle vehicle;
 
     [SerializeField] private LineRenderer pathLineRenderer;
@@ -40,7 +36,7 @@ public class VehicleMovement : MonoBehaviour
     private void Awake()
     {
         visual = GetComponentInChildren<SpriteRenderer>();
-        visual.enabled = false;
+        if (visual != null) visual.enabled = false;
         EnsureLineRenderer();
     }
 
@@ -57,62 +53,34 @@ public class VehicleMovement : MonoBehaviour
         pathLineRenderer.sortingOrder = 2;
     }
 
-    public void StartAdventure(Vector3Int start, Vector3Int end)
+    // Appelé par VehicleManager après calcul du chemin (coroutines FIFO côté manager)
+    public void StartAdventureWithComputedPath(Vector3Int start, List<Vector3Int> computedPath)
     {
-        pathCts?.Cancel();
-        pathCts = new CancellationTokenSource();
-        ClearPathVisualization();
-
-        Vehicle.IsAvailable = false;
-
-        bool useDijkstra = Vehicle.Algorithme == AlgorithmeEnum.DIJKSTRA;
-        StartCoroutine(ComputePathAndStartCoroutine(start, end, useDijkstra, pathCts.Token));
-    }
-
-    private IEnumerator ComputePathAndStartCoroutine(Vector3Int start, Vector3Int end, bool useDijkstra, CancellationToken cancellationToken)
-    {
-        List<Vector3Int> computedPath = null;
-
-        if (useDijkstra)
-        {
-            yield return StartCoroutine(World.DijkstraCoroutine(start, end, result => computedPath = result, () => cancellationToken.IsCancellationRequested));
-        }
-        else
-        {
-            yield return StartCoroutine(World.AStarCoroutine(start, end, result => computedPath = result, () => cancellationToken.IsCancellationRequested));
-        }
-
-        if (cancellationToken.IsCancellationRequested)
-        {
-            Vehicle.IsAvailable = true;
-            yield break;
-        }
-
         if (computedPath == null || computedPath.Count == 0)
         {
             Vehicle.IsAvailable = true;
-            yield break;
+            return;
         }
-
+        Vehicle.IsAvailable = false;
         transform.position = WorldTilemap.CellToWorld(start) + new Vector3(0, pathYOffset, 0);
-        this.path = computedPath;
-        ShowPathLine(this.path);
+        path = computedPath;
+        ShowPathLine(path);
         StartCoroutine(MoveAdventure());
     }
 
     private IEnumerator MoveAdventure()
     {
         OnAdventureStarted?.Invoke(Vehicle);
-        visual.enabled = true;
+        if (visual != null) visual.enabled = true;
         yield return MoveAlongPath();
 
         OnAdventureEnded?.Invoke(Vehicle);
         OnAdventureBackUpStarted?.Invoke(Vehicle);
 
-        this.path.Reverse();
+        path.Reverse();
         if (showReturnPath)
         {
-            ShowPathLine(this.path); // Met à jour pour le retour
+            ShowPathLine(path);
         }
         else
         {
@@ -121,11 +89,10 @@ public class VehicleMovement : MonoBehaviour
         yield return MoveAlongPath();
 
         OnAdventureBackUpEnded?.Invoke(Vehicle);
-        this.path = null;
+        path = null;
         Vehicle.IsAvailable = true;
-        visual.enabled = false;
+        if (visual != null) visual.enabled = false;
         ClearPathVisualization();
-        yield return null;
     }
 
     public IEnumerator MoveAlongPath()
@@ -136,7 +103,7 @@ public class VehicleMovement : MonoBehaviour
             var floor = World.FloorMap[point];
             var speed = floor.Speed;
             var targetPosition = WorldTilemap.CellToWorld(point) + new Vector3(0, pathYOffset, 0);
-            while (Vector3.Distance(transform.position, targetPosition) > 0.1f)
+            while ((transform.position - targetPosition).sqrMagnitude > 0.01f)
             {
                 nextPos = point;
                 var direction = (targetPosition - transform.position).normalized;
@@ -145,27 +112,22 @@ public class VehicleMovement : MonoBehaviour
                 transform.position = Vector3.MoveTowards(transform.position, targetPosition, Vehicle.Speed * speed * Time.deltaTime);
                 yield return null;
             }
-
             nextPos = point;
             currentPos = point;
             yield return null;
         }
-
-        yield break;
     }
 
-    // Affiche le chemin via LineRenderer (un seul draw call)
     private void ShowPathLine(List<Vector3Int> pathToShow)
     {
         if (pathToShow == null || pathToShow.Count == 0) { ClearPathVisualization(); return; }
         EnsureLineRenderer();
         pathLineRenderer.enabled = true;
         pathLineRenderer.positionCount = pathToShow.Count;
+        var worldPositions = new Vector3[pathToShow.Count];
         for (int i = 0; i < pathToShow.Count; i++)
-        {
-            var cell = pathToShow[i];
-            pathLineRenderer.SetPosition(i, WorldTilemap.CellToWorld(cell) + new Vector3(0, pathYOffset, 0));
-        }
+            worldPositions[i] = WorldTilemap.CellToWorld(pathToShow[i]) + new Vector3(0, pathYOffset, 0);
+        pathLineRenderer.SetPositions(worldPositions);
     }
 
     private void ClearPathVisualization()
