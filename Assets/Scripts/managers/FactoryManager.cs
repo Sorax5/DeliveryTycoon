@@ -21,10 +21,12 @@ public class FactoryManager : MonoBehaviour
     [SerializeField] private WorldManager worldManager;
     [SerializeField] private VehicleManager vehicleManager;
     [SerializeField] private StoreManager storeManager;
+    [SerializeField] private MoneyUI moneyUI;
 
     [SerializeField] private FactoryDefinition factoryDefinition;
 
     public Factory Factory { get; private set; }
+    public FactoryEffects FactoryEffects { get; private set; }
 
     private void Start()
     {
@@ -33,6 +35,7 @@ public class FactoryManager : MonoBehaviour
 
         GameObject factoryGameObject = GameObject.Instantiate(factoryDefinition.FactoryPrefab);
         factoryGameObject.transform.position = worldManager.CellToWorld(factoryPosition) + new Vector3(0, 0.5f, 0);
+        FactoryEffects = factoryGameObject.GetComponent<FactoryEffects>();
 
         int amountOfVehicles = 20;
         for (int i = 0; i < amountOfVehicles; i++)
@@ -45,6 +48,16 @@ public class FactoryManager : MonoBehaviour
         {
             storeManager.CreateStore(worldManager.World.GetRandomPositionAt(Factory.Position, 50), 0);
         }
+
+        moneyUI.Factory = Factory;
+
+        vehicleManager.OnAdventureBackUpEnded += VehicleManager_OnAdventureBackUpEnded;
+    }
+
+    private void VehicleManager_OnAdventureBackUpEnded(Vehicle obj)
+    {
+        Factory.Money += 10;
+        FactoryEffects.PlayMoneyEffect();
     }
 
     private void Update()

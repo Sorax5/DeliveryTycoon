@@ -7,6 +7,11 @@ public class VehicleManager : MonoBehaviour
 {
     public event Action<Vehicle> OnVehicleAdded;
 
+    public event Action<Vehicle> OnAdventureStarted;
+    public event Action<Vehicle> OnAdventureEnded;
+    public event Action<Vehicle> OnAdventureBackUpStarted;
+    public event Action<Vehicle> OnAdventureBackUpEnded;
+
     [SerializeField] private WorldManager worldManager;
     [SerializeField] private List<VehicleDefinition> vehicles;
 
@@ -33,10 +38,10 @@ public class VehicleManager : MonoBehaviour
         Vehicles.Add(vehicle);
         VehicleMovements.Add(movement);
 
-        movement.OnAdventureStarted += onDeliveryStarted;
-        movement.OnAdventureEnded += onDeliveryEnded;
-        movement.OnAdventureBackUpStarted += onDeliveryBackupStarted;
-        movement.OnAdventureBackUpEnded += onDeliveryBackupEnded;
+        movement.OnAdventureStarted += v => OnAdventureStarted?.Invoke(v);
+        movement.OnAdventureEnded += v => OnAdventureEnded?.Invoke(v);
+        movement.OnAdventureBackUpStarted += v => OnAdventureBackUpStarted?.Invoke(v);
+        movement.OnAdventureBackUpEnded += v => OnAdventureBackUpEnded?.Invoke(v);
 
         OnVehicleAdded?.Invoke(vehicle);
         return vehicle; 
@@ -48,10 +53,13 @@ public class VehicleManager : MonoBehaviour
         {
             return false;
         }
+
         var vehicle = GetAvailableVehicle();
         var movement = GetVehicleMovement(vehicle);
         vehicle.IsAvailable = false;
+
         EnqueuePath(movement, factory.Position, store.Position, vehicle.Algorithme == AlgorithmeEnum.DIJKSTRA);
+        
         return true;
     }
 
@@ -62,7 +70,6 @@ public class VehicleManager : MonoBehaviour
 
     private void Update()
     {
-        // Démarre tant qu'il y a de la capacité de calcul
         while (activePathComputations < maxParallelPath && pathQueue.Count > 0)
         {
             var req = pathQueue.Dequeue();
@@ -89,7 +96,12 @@ public class VehicleManager : MonoBehaviour
     public bool HasAvailableVehicle()
     {
         foreach (var vehicle in Vehicles)
-            if (vehicle.IsAvailable) return true;
+        {
+            if (vehicle.IsAvailable)
+            {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -102,11 +114,6 @@ public class VehicleManager : MonoBehaviour
     {
         return VehicleMovements.FirstOrDefault(vm => vm.Vehicle.UniqueId == vehicle.UniqueId);
     }
-
-    private void onDeliveryStarted(Vehicle vehicle) { }
-    private void onDeliveryEnded(Vehicle vehicle) { }
-    private void onDeliveryBackupStarted(Vehicle vehicle) { }
-    private void onDeliveryBackupEnded(Vehicle vehicle) { }
 
     private void OnDrawGizmos()
     {
