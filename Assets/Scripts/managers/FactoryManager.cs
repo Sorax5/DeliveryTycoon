@@ -37,7 +37,7 @@ public class FactoryManager : MonoBehaviour
         factoryGameObject.transform.position = worldManager.CellToWorld(factoryPosition) + new Vector3(0, 0.5f, 0);
         FactoryEffects = factoryGameObject.GetComponent<FactoryEffects>();
 
-        int amountOfVehicles = 20;
+        int amountOfVehicles = 10;
         for (int i = 0; i < amountOfVehicles; i++)
         {
             vehicleManager.CreateVehicle(0);
@@ -62,10 +62,12 @@ public class FactoryManager : MonoBehaviour
 
     private void Update()
     {
-        if (vehicleManager.HasAvailableVehicle())
+        if (!vehicleManager.HasAvailableVehicle())
         {
-            var randomStore = storeManager.GetRandomStore();
-            vehicleManager.StartDelivery(Factory, randomStore);
+            return;
         }
+
+        var randomStore = storeManager.GetRandomStore();
+        vehicleManager.StartDelivery(Factory, randomStore);
     }
 }
