@@ -16,11 +16,12 @@ public class Vehicle
         get => speedMultiplier;
         set
         {
-            if (Math.Abs(speedMultiplier - value) > 0.01f)
+            if (Math.Abs(speedMultiplier - value) <= 0.01f)
             {
-                speedMultiplier = value;
-                OnSpeedMultiplierChanged?.Invoke();
+                return;
             }
+            speedMultiplier = value;
+            OnSpeedMultiplierChanged?.Invoke();
         }
     }
     public float Speed => speedMultiplier * Definition.speed;
@@ -30,11 +31,8 @@ public class Vehicle
         get => isAvailable; 
         set
         {
-            if (isAvailable != value)
-            {
-                isAvailable = value;
-                OnAvailabilityChanged?.Invoke();
-            }
+            isAvailable = value;
+            OnAvailabilityChanged?.Invoke();
         }
     }
     public AlgorithmeEnum Algorithme { get; set; }

@@ -129,7 +129,7 @@ public class World
 
         while (unvisited.Count > 0)
         {
-            var current = GetClosestNode(unvisited, distances);
+            var current = getClosestNode(unvisited, distances);
             unvisited.Remove(current);
 
             List<Vector3Int> neighbors = GetNeighbors(current);
@@ -168,12 +168,12 @@ public class World
         }
 
         distances[start] = 0;
-        fScore[start] = Heuristic(start, end);
+        fScore[start] = heuristic(start, end);
 
         var openSet = new HashSet<Vector3Int> { start };
         while (openSet.Count > 0)
         {
-            var current = GetClosestNode(openSet, fScore);
+            var current = getClosestNode(openSet, fScore);
             if (current == end)
             {
                 Vector3Int? step = end;
@@ -193,7 +193,7 @@ public class World
                 {
                     previous[neighbor] = current;
                     distances[neighbor] = tentativeGScore;
-                    fScore[neighbor] = tentativeGScore + Heuristic(neighbor, end);
+                    fScore[neighbor] = tentativeGScore + heuristic(neighbor, end);
                     openSet.Add(neighbor);
                 }
             }
@@ -229,16 +229,17 @@ public class World
 
         distances[start] = 0;
         var unvisited = new HashSet<Vector3Int>(nodes);
-        int iter = 0;
+        var iter = 0;
 
         while (unvisited.Count > 0)
         {
             if (isCanceled != null && isCanceled())
             {
-                onComplete?.Invoke(new List<Vector3Int>()); yield break;
+                onComplete?.Invoke(new List<Vector3Int>()); 
+                yield break;
             }
 
-            Vector3Int current = GetClosestNode(unvisited, distances);
+            var current = getClosestNode(unvisited, distances);
             unvisited.Remove(current);
 
             if (current.Equals(end))
@@ -250,22 +251,25 @@ public class World
 
             foreach (var neighbor in neighbors)
             {
-                if (!weights.ContainsKey(neighbor))
+                if (weights.TryGetValue(neighbor, out var weight))
                 {
-                    continue;
-                }
+                    var cost = distances[current] + weights[neighbor];
+                    if (cost >= distances[neighbor])
+                    {
+                        continue;
+                    }
 
-                var cost = distances[current] + weights[neighbor];
-                if (cost < distances[neighbor])
-                {
                     distances[neighbor] = cost;
                     previous[neighbor] = current;
                 }
+                
             }
 
             iter++;
             if (iter % yieldEvery == 0)
+            {
                 yield return null;
+            }
         }
 
         if (!distances.ContainsKey(end) || distances[end] >= float.MaxValue)
@@ -317,7 +321,7 @@ public class World
         }
 
         distances[start] = 0;
-        fScore[start] = Heuristic(start, end);
+        fScore[start] = heuristic(start, end);
 
         var openSet = new HashSet<Vector3Int> { start };
         var iter = 0;
@@ -329,7 +333,7 @@ public class World
                 onComplete?.Invoke(new List<Vector3Int>()); yield break;
             }
 
-            Vector3Int current = GetClosestNode(openSet, fScore);
+            var current = getClosestNode(openSet, fScore);
             if (current.Equals(end))
             {
                 Vector3Int? step = end;
@@ -346,69 +350,73 @@ public class World
 
             foreach (var neighbor in GetNeighbors(current))
             {
-                if (!weights.ContainsKey(neighbor))
+                if (weights.TryGetValue(neighbor, out var weight))
                 {
-                    continue;
+                    var tentativeGScore = distances[current] + weights[neighbor];
+
+                    if (tentativeGScore >= distances[neighbor])
+                    {
+                        continue;
+                    }
+
+                    previous[neighbor] = current;
+                    distances[neighbor] = tentativeGScore;
+                    fScore[neighbor] = tentativeGScore + heuristic(neighbor, end);
+                    openSet.Add(neighbor);
                 }
 
-                var tentativeGScore = distances[current] + weights[neighbor];
-
-                if (tentativeGScore >= distances[neighbor])
-                {
-                    continue;
-                }
-
-                previous[neighbor] = current;
-                distances[neighbor] = tentativeGScore;
-                fScore[neighbor] = tentativeGScore + Heuristic(neighbor, end);
-                openSet.Add(neighbor);
             }
 
             iter++;
             if (iter % yieldEvery == 0)
+            {
                 yield return null;
+            }
         }
 
         onComplete?.Invoke(path);
     }
 
-    private float Heuristic(Vector3Int a, Vector3Int b)
+    private float heuristic(Vector3Int a, Vector3Int b)
     {
         return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
     }
 
-    private Vector3Int GetClosestNode(HashSet<Vector3Int> unvisited, Dictionary<Vector3Int, float> distances)
+    private Vector3Int getClosestNode(HashSet<Vector3Int> unvisited, Dictionary<Vector3Int, float> distances)
     {
         Vector3Int closestNode = default;
-        float closestDistance = float.MaxValue;
+        var closestDistance = float.MaxValue;
         foreach (var node in unvisited)
         {
-            if (distances[node] < closestDistance)
+            if (distances[node] >= closestDistance)
             {
-                closestDistance = distances[node];
-                closestNode = node;
+                continue;
             }
+            closestDistance = distances[node];
+            closestNode = node;
         }
         return closestNode;
     }
 
     private List<Vector3Int> GetNeighbors(Vector3Int node)
     {
-        List<Vector3Int> neighbors = new List<Vector3Int>();
-        Vector3Int[] directions = new Vector3Int[]
+        var neighbors = new List<Vector3Int>();
+        var directions = new Vector3Int[]
         {
             new Vector3Int(1, 0, 0),
             new Vector3Int(-1, 0, 0),
             new Vector3Int(0, 1, 0),
             new Vector3Int(0, -1, 0)
         };
+
         foreach (var direction in directions)
         {
-            Vector3Int neighbor = node + direction;
-            if (floorMap.ContainsKey(neighbor))
+            var neighbor = node + direction;
+            if (!floorMap.ContainsKey(neighbor))
             {
-                neighbors.Add(neighbor);
+                continue;
             }
+            neighbors.Add(neighbor);
         }
         return neighbors;
     }

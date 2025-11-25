@@ -33,7 +33,7 @@ public class VehicleManager : MonoBehaviour
     public Vehicle CreateVehicle(int index)
     {
         var definition = vehicles[index];
-        Vehicle vehicle = new Vehicle(definition);
+        var vehicle = new Vehicle(definition);
         var movement = definition.CreateVehicle(worldManager.WorldTilemap, worldManager.World, vehicle);
         Vehicles.Add(vehicle);
         VehicleMovements.Add(movement);
@@ -65,7 +65,13 @@ public class VehicleManager : MonoBehaviour
 
     private void EnqueuePath(VehicleMovement movement, Vector3Int start, Vector3Int end, bool useDijkstra)
     {
-        pathQueue.Enqueue(new PathRequest { Movement = movement, Start = start, End = end, UseDijkstra = useDijkstra });
+        pathQueue.Enqueue(new PathRequest
+        {
+            Movement = movement, 
+            Start = start, 
+            End = end, 
+            UseDijkstra = useDijkstra
+        });
     }
 
     private void Update()
@@ -95,14 +101,7 @@ public class VehicleManager : MonoBehaviour
 
     public bool HasAvailableVehicle()
     {
-        foreach (var vehicle in Vehicles)
-        {
-            if (vehicle.IsAvailable)
-            {
-                return true;
-            }
-        }
-        return false;
+        return Vehicles.Any(v => v.IsAvailable);
     }
 
     public Vehicle GetAvailableVehicle()
@@ -119,7 +118,11 @@ public class VehicleManager : MonoBehaviour
     {
         foreach (var movement in VehicleMovements)
         {
-            if (movement == null || movement.path == null || movement.path.Count == 0) continue;
+            if (movement == null || movement.path == null || movement.path.Count == 0)
+            {
+                continue;
+            }
+
             Gizmos.color = Color.green;
             for (var i = 0; i < movement.path.Count - 1; i++)
             {
@@ -127,6 +130,7 @@ public class VehicleManager : MonoBehaviour
                 var end = worldManager.WorldTilemap.CellToWorld(movement.path[i + 1]) + new Vector3(0, 0.5f, 0);
                 Gizmos.DrawLine(start, end);
             }
+
             Gizmos.color = Color.red;
             Gizmos.DrawSphere(worldManager.CellToWorld(movement.currentPos) + new Vector3(0, 0.5f, 0), 0.1f);
             Gizmos.color = Color.blue;

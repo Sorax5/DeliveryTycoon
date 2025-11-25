@@ -31,6 +31,9 @@ public class FactoryManager : MonoBehaviour
     public Factory Factory { get; private set; }
     public FactoryEffects FactoryEffects { get; private set; }
 
+    public const int AmountOfVehicles = 10;
+    public const int AmountOfStores = 8;
+
     private void Start()
     {
         Vector3Int factoryPosition = worldManager.World.GetRandomPosition();
@@ -41,20 +44,17 @@ public class FactoryManager : MonoBehaviour
         factoryGameObject.transform.position = worldManager.CellToWorld(factoryPosition) + new Vector3(0, 0.5f, 0);
         FactoryEffects = factoryGameObject.GetComponent<FactoryEffects>();
 
-        int amountOfVehicles = 10;
-        for (int i = 0; i < amountOfVehicles; i++)
+        for (var i = 0; i < AmountOfVehicles; i++)
         {
             vehicleManager.CreateVehicle(0);
         }
 
-        int amountOfStores = 8;
-        for (int i = 0; i < amountOfStores; i++)
+        for (var i = 0; i < AmountOfStores; i++)
         {
             storeManager.CreateStore(worldManager.World.GetRandomPositionAt(Factory.Position, 50), 0);
         }
 
         moneyUI.Factory = Factory;
-
         vehicleManager.OnAdventureBackUpEnded += VehicleManager_OnAdventureBackUpEnded;
     }
 

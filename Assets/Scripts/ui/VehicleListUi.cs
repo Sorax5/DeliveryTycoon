@@ -27,8 +27,8 @@ public class VehicleListUI : MonoBehaviour
 
     private void AddVehicleUI(Vehicle vehicle)
     {
-        GameObject vehicleUIObject = Instantiate(vehicleUIPrefab, content.transform);
-        VehicleUI vehicleUI = vehicleUIObject.GetComponent<VehicleUI>();
+        var vehicleUIObject = Instantiate(vehicleUIPrefab, content.transform);
+        var vehicleUI = vehicleUIObject.GetComponent<VehicleUI>();
         vehicleUI.Vehicle = vehicle;
     }
 }

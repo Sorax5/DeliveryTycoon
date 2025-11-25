@@ -31,15 +31,15 @@ public class WorldManager : MonoBehaviour
             worldTilemap.SetTile(position, floor.Definition.Tile);
         }
 
-        int width = mapDefinition.Width / 2;
-        int depth = mapDefinition.Height / 2;
+        var width = mapDefinition.Width / 2;
+        var depth = mapDefinition.Height / 2;
 
-        Vector3 bottomLeft = worldTilemap.CellToWorld(new Vector3Int(-width, -depth, 0));
-        Vector3 topLeft = worldTilemap.CellToWorld(new Vector3Int(-width, depth, 0));
-        Vector3 topRight = worldTilemap.CellToWorld(new Vector3Int(width, depth, 0));
-        Vector3 bottomRight = worldTilemap.CellToWorld(new Vector3Int(width, -depth, 0));
+        var bottomLeft = worldTilemap.CellToWorld(new Vector3Int(-width, -depth, 0));
+        var topLeft = worldTilemap.CellToWorld(new Vector3Int(-width, depth, 0));
+        var topRight = worldTilemap.CellToWorld(new Vector3Int(width, depth, 0));
+        var bottomRight = worldTilemap.CellToWorld(new Vector3Int(width, -depth, 0));
 
-        Vector3 center = (bottomLeft + topLeft + topRight + bottomRight) * 0.25f;
+        var center = (bottomLeft + topLeft + topRight + bottomRight) * 0.25f;
 
         playerBoundsCollider.points = new Vector2[]
         {
