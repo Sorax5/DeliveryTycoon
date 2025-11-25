@@ -21,6 +21,9 @@ public class FactoryManager : MonoBehaviour
     [SerializeField] private WorldManager worldManager;
     [SerializeField] private VehicleManager vehicleManager;
     [SerializeField] private StoreManager storeManager;
+
+    [SerializeField] private GameObject player;
+
     [SerializeField] private MoneyUI moneyUI;
 
     [SerializeField] private FactoryDefinition factoryDefinition;
@@ -32,6 +35,7 @@ public class FactoryManager : MonoBehaviour
     {
         Vector3Int factoryPosition = worldManager.World.GetRandomPosition();
         Factory = new Factory(factoryPosition, factoryDefinition);
+        player.transform.position = worldManager.CellToWorld(factoryPosition) + new Vector3(0, 0.5f, 0);
 
         GameObject factoryGameObject = GameObject.Instantiate(factoryDefinition.FactoryPrefab);
         factoryGameObject.transform.position = worldManager.CellToWorld(factoryPosition) + new Vector3(0, 0.5f, 0);

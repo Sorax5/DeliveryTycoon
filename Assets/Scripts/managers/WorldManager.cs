@@ -50,7 +50,6 @@ public class WorldManager : MonoBehaviour
         };
 
         playerBoundsCollider.transform.position = new Vector2(center.x - bottomLeft.x, center.y - bottomLeft.y);
-        player.transform.position = new Vector3(0, depth, 0) + worldTilemap.cellSize * 0.5f;
     }
 
     public Vector3 CellToWorld(Vector3Int cellPosition)
