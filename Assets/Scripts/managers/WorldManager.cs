@@ -28,7 +28,7 @@ public class WorldManager : MonoBehaviour
 
         foreach (var (position, floor) in this.World.FloorMap)
         {
-            worldTilemap.SetTile(position, floor.Definition.Tile);
+            worldTilemap.SetTile(position, floor.Definition.GetRandomVariant());
         }
 
         var width = mapDefinition.Width / 2;

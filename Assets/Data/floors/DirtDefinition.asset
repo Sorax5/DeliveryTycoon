@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FloorDefinition
   Poid: 1.5
   Speed: 0.5
-  Tile: {fileID: 11400000, guid: 975054ccc91d4904f996de61d5499804, type: 2}
+  Variants:
+  - {fileID: 11400000, guid: 975054ccc91d4904f996de61d5499804, type: 2}
   debugColor: {r: 0.51572317, g: 0.14712985, b: 0, a: 1}
