@@ -117,6 +117,7 @@ public class VehicleMovement : MonoBehaviour
                 var direction = (targetPosition - transform.position).normalized;
                 var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                 transform.SetPositionAndRotation(Vector3.MoveTowards(transform.position, targetPosition, Vehicle.Speed * speed * Time.deltaTime), Quaternion.Euler(0, 0, angle - 90));
+
                 yield return null;
             }
             nextPos = point;
