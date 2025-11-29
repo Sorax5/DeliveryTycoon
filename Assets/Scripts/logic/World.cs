@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class World
@@ -23,19 +21,19 @@ public class World
         var width = mapDefinition.Width;
         var depth = mapDefinition.Height;
 
-        int seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+        var seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
 
-        FastNoiseLite noiseMaker = mapDefinition.NoiseDefinition.CreateNoiseMaker();
+        var noiseMaker = mapDefinition.NoiseDefinition.CreateNoiseMaker();
         noiseMaker.SetSeed(seed);
 
         for (var x = 0; x < width; x++)
         {
             for (var y = 0; y < depth; y++)
             {
-                Vector3Int position = new Vector3Int(x, y, 0);
-                float noise = noiseMaker.GetNoise(x, y);
+                var position = new Vector3Int(x, y, 0);
+                var noise = noiseMaker.GetNoise(x, y);
 
-                FloorRange range = mapDefinition.GetFloorRangeByNoise(noise);
+                var range = mapDefinition.GetFloorRangeByNoise(noise);
                 if (range == null)
                 {
                     Debug.Log($"Not any floor find for Noise value {noise}");
@@ -50,7 +48,7 @@ public class World
     public Vector3Int GetRandomPosition()
     {
         var keys = new List<Vector3Int>(floorMap.Keys);
-        int randomIndex = UnityEngine.Random.Range(0, keys.Count);
+        var randomIndex = UnityEngine.Random.Range(0, keys.Count);
         return keys[randomIndex];
     }
 
@@ -69,34 +67,43 @@ public class World
             return position;
         }
 
-        int maxDistSq = distance * distance;
+        var maxDistSq = distance * distance;
         var possiblePositions = new List<Vector3Int>();
 
         foreach (var kvp in floorMap)
         {
             var pos = kvp.Key;
-            if (pos == position) continue;
+            if (pos == position)
+            {
+                continue;
+            }
 
-            int dx = pos.x - position.x;
-            int dy = pos.y - position.y;
-            int distSq = dx * dx + dy * dy;
+            var dx = pos.x - position.x;
+            var dy = pos.y - position.y;
+            var distSq = dx * dx + dy * dy;
 
             if (distSq <= maxDistSq)
+            {
                 possiblePositions.Add(pos);
+            }
         }
 
         if (possiblePositions.Count == 0)
         {
-            Vector3Int nearest = position;
-            int nearestSq = int.MaxValue;
+            var nearest = position;
+            var nearestSq = int.MaxValue;
             foreach (var kvp in floorMap)
             {
                 var pos = kvp.Key;
-                if (pos == position) continue;
+                if (pos == position)
+                {
+                    continue;
+                }
 
-                int dx = pos.x - position.x;
-                int dy = pos.y - position.y;
-                int dsq = dx * dx + dy * dy;
+                var dx = pos.x - position.x;
+                var dy = pos.y - position.y;
+                var dsq = dx * dx + dy * dy;
+
                 if (dsq < nearestSq)
                 {
                     nearestSq = dsq;
@@ -107,100 +114,9 @@ public class World
             return nearestSq == int.MaxValue ? position : nearest;
         }
 
-        int randomIndex = UnityEngine.Random.Range(0, possiblePositions.Count);
+        var randomIndex = UnityEngine.Random.Range(0, possiblePositions.Count);
         return possiblePositions[randomIndex];
     } 
-
-    public List<Vector3Int> Dijkstra(Vector3Int start, Vector3Int end)
-    {
-        List<Vector3Int> path = new List<Vector3Int>();
-        Dictionary<Vector3Int, float> distances = new Dictionary<Vector3Int, float>();
-        Dictionary<Vector3Int, Vector3Int?> previous = new Dictionary<Vector3Int, Vector3Int?>();
-
-        foreach (var (position, floor) in floorMap)
-        {
-            distances[position] = float.MaxValue;
-            previous[position] = null;
-        }
-
-        distances[start] = 0;
-
-        var unvisited = new HashSet<Vector3Int>(floorMap.Keys);
-
-        while (unvisited.Count > 0)
-        {
-            var current = getClosestNode(unvisited, distances);
-            unvisited.Remove(current);
-
-            List<Vector3Int> neighbors = GetNeighbors(current);
-            foreach (var neighbor in neighbors)
-            {
-                var cost = distances[current] + floorMap[neighbor].Poids;
-                if (cost < distances[neighbor])
-                {
-                    distances[neighbor] = cost;
-                    previous[neighbor] = current;
-                }
-            }
-        }
-
-        Vector3Int? step = end;
-        while (step != null)
-        {
-            path.Insert(0, step.Value);
-            step = previous[step.Value];
-        }
-        return path;
-    }
-
-    public List<Vector3Int> AStar(Vector3Int start, Vector3Int end)
-    {
-        List<Vector3Int> path = new List<Vector3Int>();
-        Dictionary<Vector3Int, float> distances = new Dictionary<Vector3Int, float>();
-        Dictionary<Vector3Int, Vector3Int?> previous = new Dictionary<Vector3Int, Vector3Int?>();
-        Dictionary<Vector3Int, float> fScore = new Dictionary<Vector3Int, float>();
-
-        foreach (var (position, floor) in floorMap)
-        {
-            distances[position] = float.MaxValue;
-            previous[position] = null;
-            fScore[position] = float.MaxValue;
-        }
-
-        distances[start] = 0;
-        fScore[start] = heuristic(start, end);
-
-        var openSet = new HashSet<Vector3Int> { start };
-        while (openSet.Count > 0)
-        {
-            var current = getClosestNode(openSet, fScore);
-            if (current == end)
-            {
-                Vector3Int? step = end;
-                while (step != null)
-                {
-                    path.Insert(0, step.Value);
-                    step = previous[step.Value];
-                }
-                return path;
-            }
-            openSet.Remove(current);
-            List<Vector3Int> neighbors = GetNeighbors(current);
-            foreach (var neighbor in neighbors)
-            {
-                var tentativeGScore = distances[current] + floorMap[neighbor].Poids;
-                if (tentativeGScore < distances[neighbor])
-                {
-                    previous[neighbor] = current;
-                    distances[neighbor] = tentativeGScore;
-                    fScore[neighbor] = tentativeGScore + heuristic(neighbor, end);
-                    openSet.Add(neighbor);
-                }
-            }
-        }
-
-        return path;
-    }
 
     public IEnumerator DijkstraCoroutine(Vector3Int start, Vector3Int end, Action<List<Vector3Int>> onComplete, Func<bool> isCanceled = null, int yieldEvery = 100)
     {
@@ -352,7 +268,7 @@ public class World
             {
                 if (weights.TryGetValue(neighbor, out var weight))
                 {
-                    var tentativeGScore = distances[current] + weights[neighbor];
+                    var tentativeGScore = distances[current] + weight;
 
                     if (tentativeGScore >= distances[neighbor])
                     {
