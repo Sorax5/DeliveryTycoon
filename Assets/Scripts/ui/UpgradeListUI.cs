@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class VehicleUI : MonoBehaviour
+public class UpgradeListUI : MonoBehaviour
 {
     private Vehicle vehicle;
     private bool hasBeenInitialised = false;
@@ -19,17 +20,25 @@ public class VehicleUI : MonoBehaviour
         }
     }
 
-    [SerializeField] public UpgradeListUI upgradeListUI;
-
+    [SerializeField] private GameObject child;
     [SerializeField] private TextMeshProUGUI labelName;
     [SerializeField] private TextMeshProUGUI uniqueId;
     [SerializeField] private TextMeshProUGUI speed;
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Dropdown algorithmDropdown;
     [SerializeField] private Toggle availabilityToggle;
-    [SerializeField] private Button detailsButton;
 
-    private void updateUI() 
+    [SerializeField] private List<UpgradeDefinition> upgrades;
+    [SerializeField] private GameObject upgradeUiPrefab;
+    [SerializeField] private List<UpgradeUi> upgradeUi;
+
+    public void ActivateUi(Vehicle vehicle)
+    {
+        child.SetActive(true);
+        this.Vehicle = vehicle;
+    }
+
+    private void updateUI()
     {
         if (!hasBeenInitialised)
         {
@@ -38,14 +47,14 @@ public class VehicleUI : MonoBehaviour
             algorithmDropdown.onValueChanged.AddListener(OnValueChange);
             hasBeenInitialised = true;
 
-            detailsButton.onClick.AddListener(() =>
+            foreach (var upgradeDefinition in upgrades)
             {
-                upgradeListUI.Vehicle = vehicle;
-                upgradeListUI.ActivateUi(vehicle);
-
-            });
+                var ui = Instantiate(upgradeUiPrefab, transform).GetComponent<UpgradeUi>();
+                ui.Vehicle = vehicle;
+                ui.upgradeDefinition = upgradeDefinition;
+            }
         }
-        
+
         labelName.text = vehicle.Definition.Name;
         uniqueId.text = vehicle.UniqueId.ToString();
         speed.text = speedFormat(vehicle.Speed);
@@ -62,6 +71,11 @@ public class VehicleUI : MonoBehaviour
         {
             speed.text = speedFormat(vehicle.Speed);
         };
+
+        foreach (var ui in upgradeUi)
+        {
+            ui.Vehicle = vehicle;
+        }
     }
 
     private string speedFormat(float speed)

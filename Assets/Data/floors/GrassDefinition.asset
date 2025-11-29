@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbfdb50a097724741acff1e6cf6a923f, type: 3}
   m_Name: GrassDefinition
   m_EditorClassIdentifier: Assembly-CSharp::FloorDefinition
+  Id: grass
   Poid: 1
   Speed: 1
   Variants:

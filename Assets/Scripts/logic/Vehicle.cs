@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 [Serializable]
 public class Vehicle
@@ -36,6 +37,7 @@ public class Vehicle
         }
     }
     public AlgorithmeEnum Algorithme { get; set; }
+    public List<string> ByPassFloor { get; set; }
 
     public VehicleDefinition Definition { get; private set; }
 

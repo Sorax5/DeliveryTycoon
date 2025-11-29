@@ -10,6 +10,7 @@ public class VehicleListUI : MonoBehaviour
     [SerializeField] private VehicleManager vehicleManager;
 
     [SerializeField] private Button menuButton;
+    [SerializeField] private UpgradeListUI upgradeListUI;
 
     private void Awake()
     {
@@ -30,5 +31,6 @@ public class VehicleListUI : MonoBehaviour
         var vehicleUIObject = Instantiate(vehicleUIPrefab, content.transform);
         var vehicleUI = vehicleUIObject.GetComponent<VehicleUI>();
         vehicleUI.Vehicle = vehicle;
+        vehicleUI.upgradeListUI = upgradeListUI;
     }
 }

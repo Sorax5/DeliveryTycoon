@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbfdb50a097724741acff1e6cf6a923f, type: 3}
   m_Name: BetonDefinition
   m_EditorClassIdentifier: Assembly-CSharp::FloorDefinition
+  Id: beton
   Poid: 0.1
   Speed: 3
   Variants:

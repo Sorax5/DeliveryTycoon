@@ -6,7 +6,8 @@ using UnityEngine.Tilemaps;
 [CreateAssetMenu(fileName = "FloorDefinition", menuName = "delivery/FloorDefinition")]
 public class FloorDefinition : ScriptableObject
 {
-    [Header("Gameplay")]
+    [Header("Gameplay")] 
+    public string Id;
     public float Poid = 1.0f;
     public float Speed = 1.0f;
 
